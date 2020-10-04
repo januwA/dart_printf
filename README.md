@@ -5,7 +5,7 @@ Very very simple format printing
 ## Install
 ```yaml
 dependencies:
-  printf:
+  dart_printf:
 ```
 
 ## Usage
