@@ -7,6 +7,7 @@ void main() {
   );
 
   printf('hello %s, [%s] lib', 'world', 'printf');
+  print(printfr('hello %s, [%s] lib', 'world', 'printf'));
 
   printf('Dart');
 }

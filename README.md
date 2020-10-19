@@ -19,6 +19,7 @@ void main() {
   );
 
   printf('hello %s, [%s] lib', 'world', 'printf');
+  print(printfr('hello %s, [%s] lib', 'world', 'printf'));
 
   printf('Dart');
 }
@@ -27,4 +28,6 @@ void main() {
 ## Run Test
 ```sh
 > pub run test .\test\dart_printf_test.dart
+
+λ dart test ./test/dart_printf_test.dart
 ```
