@@ -1,4 +1,4 @@
-void _typeErr(RegExpMatch m, int index, dynamic v) {
+void _typeWarn(RegExpMatch m, int index, dynamic v) {
   var type = '';
   switch (m.namedGroup('f')) {
     case 's':
@@ -20,16 +20,19 @@ void _typeErr(RegExpMatch m, int index, dynamic v) {
     default:
   }
 
-  throw FormatException(
-      '"printf": 格式字符串"${m[1]}"需要类型"${type}"的参数，但可变参数 ${index} 拥有了类型"${v.runtimeType}"');
+  // 不抛出错误，只给出警告
+  print(
+      '[[ printf ]]: The format string "${m[1]}" requires a parameter of type "${type}", but the variable parameter ${index + 1} has type "${v.runtimeType}"');
 }
 
 var _fexp = RegExp(r'(%(?<n>\d*)(?<f>[\w\W]))');
 String _printf(List<dynamic> arguments, [bool needPrint = true]) {
   if (arguments.isEmpty) return '';
 
+  // format string
   var format = arguments.first;
 
+  // 如果不是string，直接打印
   if (format is! String) {
     if (needPrint) print(format);
     return format.toString();
@@ -38,83 +41,85 @@ String _printf(List<dynamic> arguments, [bool needPrint = true]) {
   var formatList = [];
   var matches = _fexp.allMatches(format);
 
+  // 剩余的参数
   var args = arguments.getRange(1, arguments.length).toList();
+
   // No formatting required
   if (matches.isEmpty || args == null || args.isEmpty) {
     if (needPrint) print(format);
     return format;
   }
 
+  // string index
   var start = 0;
-  void _next(m, v) {
+
+  void _next(m, arg) {
     formatList.add(format.substring(start, m.start));
-    formatList.add(v);
+    formatList.add(arg);
     start = m.end;
   }
 
   for (var i = 0; i < args.length; i++) {
-    var v = args[i];
+    var arg = args[i];
 
     // 无视掉多余的args
-    if (i >= matches.length) {
-      break;
-    }
+    if (i >= matches.length) break;
+
     var m = matches.elementAt(i);
-    var f = m.namedGroup('f');
-    var n = m.namedGroup('n');
+    var f = m.namedGroup('f'); // %s %x 这种
+    var n = m.namedGroup('n'); // %4x中的4
     switch (f) {
       case 's':
-        if (v is String) {
-          _next(m, v);
-        } else {
-          _typeErr(m, i + 1, v);
-        }
+        if (arg is! String) _typeWarn(m, i, arg);
+        _next(m, arg);
         break;
       case 'd':
       case 'i':
-        if (v is int) {
-          _next(m, v);
-        } else if (v is bool) {
-          _next(m, v ? 1 : 0);
-        } else {
-          _typeErr(m, i + 1, v);
+        if (arg is int) {
+          _next(m, arg);
+          break;
         }
+
+        if (arg is bool) {
+          _next(m, arg ? 1 : 0);
+          break;
+        }
+
+        _typeWarn(m, i, arg);
+        _next(m, arg.toString());
         break;
       case 'f':
       case 'e':
-        if (v is double) {
-          _next(m, v);
-        } else {
-          _typeErr(m, i + 1, v);
-        }
+        if (arg is! double) _typeWarn(m, i, arg);
+        _next(m, arg);
         break;
       case 'b':
-        if (v is bool) {
-          _next(m, v);
-        } else {
-          _typeErr(m, i + 1, v);
-        }
+        if (arg is! bool) _typeWarn(m, i, arg);
+        _next(m, arg);
         break;
       case 'x':
       case 'X':
         var isUpper = f == 'X';
         var width = int.parse(n.isEmpty ? '0' : n);
-        if (v is int) {
-          var hex = v.toRadixString(16).padLeft(width, '0');
+        if (arg is int) {
+          var hex = arg.toRadixString(16).padLeft(width, '0');
           _next(m, isUpper ? hex.toUpperCase() : hex);
-        } else if (v is bool) {
-          var hex = (v ? 1 : 0).toRadixString(16).padLeft(width, '0');
+          break;
+        } else if (arg is bool) {
+          var hex = (arg ? 1 : 0).toRadixString(16).padLeft(width, '0');
           _next(m, isUpper ? hex.toUpperCase() : hex);
-        } else {
-          _typeErr(m, i + 1, v);
+          break;
         }
+
+        _next(m, arg.toString());
+        _typeWarn(m, i, arg);
         break;
       case 'o':
-        _next(m, v.toString());
+        _next(m, arg.toString());
         break;
       default:
-        throw FormatException(
-            '"printf": 格式说明符中的类型字段字符"${m.namedGroup('f')}"未知');
+        print(
+            '[[ printf ]]: The type field character "${m.namedGroup('f')}" in the format specifier is unknown');
     }
   }
 
@@ -147,9 +152,9 @@ class _Printfr {
 
 ///
 /// Automatic printing, no return value.
-/// 
+///
 /// `void printf(String format, dynamic arg1, dynamic arg2, ...)`
-/// 
+///
 ///```txt
 /// %s String
 /// %d int/bool
@@ -173,12 +178,11 @@ class _Printfr {
 /// ```
 dynamic printf = _Printf();
 
-
 ///
 /// No printing, return the formatted value.
 ///
 /// `String printfr(String format, dynamic arg1, dynamic arg2, ...)`
-/// 
+///
 ///```txt
 /// %s String
 /// %d int/bool
