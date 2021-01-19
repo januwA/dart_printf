@@ -34,7 +34,9 @@ String _printf(List<dynamic> arguments, [bool needPrint = true]) {
 
   // 如果不是string，直接打印
   if (format is! String) {
-    if (needPrint) print(format);
+    if (needPrint) {
+      arguments.forEach((it) => print(it));
+    }
     return format.toString();
   }
 
@@ -46,7 +48,9 @@ String _printf(List<dynamic> arguments, [bool needPrint = true]) {
 
   // No formatting required
   if (matches.isEmpty || args == null || args.isEmpty) {
-    if (needPrint) print(format);
+    if (needPrint) {
+      arguments.forEach((it) => print(it));
+    }
     return format;
   }
 

@@ -1,3 +1,7 @@
+## 0.5.0 2021/1/19
+
+- Support continuous printing of multiple values
+
 ## 0.4.0 2020/12/1
 
 - 删除了致命错误，打印一个警告即可
