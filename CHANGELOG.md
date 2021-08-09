@@ -1,3 +1,7 @@
+## 0.6.0 2021/8/9
+
+- 空安全
+
 ## 0.5.0 2021/1/19
 
 - Support continuous printing of multiple values

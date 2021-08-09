@@ -22,7 +22,7 @@ void _typeWarn(RegExpMatch m, int index, dynamic v) {
 
   // 不抛出错误，只给出警告
   print(
-      '[[ printf ]]: The format string "${m[1]}" requires a parameter of type "${type}", but the variable parameter ${index + 1} has type "${v.runtimeType}"');
+      '[[ printf ]]: The format string "${m[1]}" requires a parameter of type "$type", but the variable parameter ${index + 1} has type "${v.runtimeType}"');
 }
 
 var _fexp = RegExp(r'(%(?<n>\d*)(?<f>[\w\W]))');
@@ -47,7 +47,7 @@ String _printf(List<dynamic> arguments, [bool needPrint = true]) {
   var args = arguments.getRange(1, arguments.length).toList();
 
   // No formatting required
-  if (matches.isEmpty || args == null || args.isEmpty) {
+  if (matches.isEmpty || args.isEmpty) {
     if (needPrint) {
       arguments.forEach((it) => print(it));
     }
@@ -72,6 +72,7 @@ String _printf(List<dynamic> arguments, [bool needPrint = true]) {
     var m = matches.elementAt(i);
     var f = m.namedGroup('f'); // %s %x 这种
     var n = m.namedGroup('n'); // %4x中的4
+
     switch (f) {
       case 's':
         if (arg is! String) _typeWarn(m, i, arg);
@@ -104,7 +105,7 @@ String _printf(List<dynamic> arguments, [bool needPrint = true]) {
       case 'x':
       case 'X':
         var isUpper = f == 'X';
-        var width = int.parse(n.isEmpty ? '0' : n);
+        var width = int.parse((n == null || n.isEmpty) ? '0' : n);
         if (arg is int) {
           var hex = arg.toRadixString(16).padLeft(width, '0');
           _next(m, isUpper ? hex.toUpperCase() : hex);
